@@ -202,12 +202,12 @@ static arith_uint256 ComputeTarget(const CBlockIndex *pindexFirst,
         // If 5 blocks happened slower than 3x expected, target 20% faster next block.
         // ie. 5 blocks took >= 15-min
         if (nActualTimespan5 >= (5 * 3 * params.nPowTargetSpacingOneMinute)) {
-            nAdjustedSpacing -= 12;
+            nAdjustedSpacing -= 18;
             LogPrintf("DAA DEBUG: 5 blocks in 15 minutes or more nAdjustedSpacing=%d ", nAdjustedSpacing);
         // Else if  5 blocks happened faster than 3x expected, target 20% slower next.
         // ie. 5 blocks took <= 1-min 40-sec
         } else if (nActualTimespan5 <= ( 5 / 3 * params.nPowTargetSpacingOneMinute)) {
-            nAdjustedSpacing += 12;
+            nAdjustedSpacing += 18;
             LogPrintf("DAA DEBUG: 5 blocks in 1:40 minutes or less nAdjustedSpacing=%d ", nAdjustedSpacing);
         }
 
@@ -271,14 +271,14 @@ uint32_t GetNextCoreWorkRequired(const CBlockIndex *pindexPrev,
                                  const CBlockHeader *pblock,
                                  const Consensus::Params &params) {
 
-    // Factor Target Spacing and difficulty adjustment based on 144 or 30 period DAA
+    // Factor Target Spacing and difficulty adjustment based on 144 or 18 period DAA
     const int nHeight = pindexPrev->nHeight;
     int64_t nPowTargetSpacing = params.nPowTargetSpacing;
     uint32_t nDAAPeriods = 144;
 
     if (nHeight > params.oneMinuteBlockHeight) {
         nPowTargetSpacing = params.nPowTargetSpacingOneMinute;
-        nDAAPeriods = 30;
+        nDAAPeriods = 18;
     }
 
     // This cannot handle the genesis block and early blocks in general.
