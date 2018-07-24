@@ -184,6 +184,10 @@ static arith_uint256 ComputeTarget(const CBlockIndex *pindexFirst,
     assert(pindexLast->nTime > pindexFirst->nTime);
     int64_t nActualTimespan = pindexLast->nTime - pindexFirst->nTime;
 
+    // For debugging only
+    int nActualLastblock = pindexPrev->nTime - pindexLast->nTime;
+    int count = pindexLast->nHeight - pindexFirst->nHeight;
+
     // Don't dampen the DAA adjustments on mainnet after 1-min fork
     if (pindexLast->nHeight < params.oneMinuteBlockHeight) {
         work *= params.nPowTargetSpacing;
@@ -203,14 +207,20 @@ static arith_uint256 ComputeTarget(const CBlockIndex *pindexFirst,
         // ie. 5 blocks took >= 15-min
         if (nActualTimespan5 >= (5 * 3 * params.nPowTargetSpacingOneMinute)) {
             nAdjustedSpacing -= 12;
+            LogPrintf("DAA DEBUG: 5 blocks in 15 minutes or more nAdjustedSpacing=%d ",nAdjustedSpacing);
         // Else if  5 blocks happened faster than 3x expected, target 20% slower next.
         // ie. 5 blocks took <= 1-min 40-sec
         } else if (nActualTimespan5 <= ( 5 / 3 * params.nPowTargetSpacingOneMinute)) {
             nAdjustedSpacing += 12;
+            LogPrintf("DAA DEBUG: 5 blocks in 1:40 minutes or less nAdjustedSpacing=%d ",nAdjustedSpacing);
         }
 
         work *= nAdjustedSpacing;
     }
+
+    LogPrintf("DAA DEBUG: First=%d, Last=%d, Prev=%d ",pindexFirst->nHeight,pindexLast->nHeight,pindexPrev->nHeight);
+    LogPrintf("%d seconds for %d blocks, avg=%d, last=%d\n",nActualTimespan,
+              count,nActualTimespan/count, nActualLastblock);
 
     work /= nActualTimespan;
 
