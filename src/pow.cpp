@@ -271,14 +271,14 @@ uint32_t GetNextCoreWorkRequired(const CBlockIndex *pindexPrev,
                                  const CBlockHeader *pblock,
                                  const Consensus::Params &params) {
 
-    // Factor Target Spacing and difficulty adjustment based on 144 or 72 period DAA
+    // Factor Target Spacing and difficulty adjustment based on 144 or 30 period DAA
     const int nHeight = pindexPrev->nHeight;
     int64_t nPowTargetSpacing = params.nPowTargetSpacing;
     uint32_t nDAAPeriods = 144;
 
     if (nHeight > params.oneMinuteBlockHeight) {
         nPowTargetSpacing = params.nPowTargetSpacingOneMinute;
-        nDAAPeriods = 72;
+        nDAAPeriods = 30;
     }
 
     // This cannot handle the genesis block and early blocks in general.
