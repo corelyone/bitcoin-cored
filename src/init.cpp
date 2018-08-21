@@ -419,6 +419,9 @@ std::string HelpMessage(HelpMessageMode mode) {
         "-txindex", strprintf(_("Maintain a full transaction index, used by "
                                 "the getrawtransaction rpc call (default: %u)"),
                               DEFAULT_TXINDEX));
+    strUsage += HelpMessageOpt(
+        "-addrindex", strprintf(_("Maintain a full address index, used by the "
+                                "searchrawtransactions rpc call (default: %u)"), 0));
 
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt(
@@ -1900,6 +1903,15 @@ bool AppInitMain(Config &config, boost::thread_group &threadGroup,
                                          ? nMaxBlockDBAndTxIndexCache
                                          : nMaxBlockDBCache)
                                         << 20);
+
+    nBlockTreeDBCache =
+        std::min(nBlockTreeDBCache, ((GetBoolArg("-txindex", DEFAULT_TXINDEX)
+                                         && GetBoolArg("-addrindex",
+                                             DEFAULT_ADDRINDEX))
+                                         ? nMaxBlockDBAndTxIndexCache
+                                         : nMaxBlockDBCache)
+                                        << 20);
+
     nTotalCache -= nBlockTreeDBCache;
     // use 25%-50% of the remainder for disk cache
     int64_t nCoinDBCache =
@@ -1992,6 +2004,12 @@ bool AppInitMain(Config &config, boost::thread_group &threadGroup,
                         _("You need to rebuild the database using -reindex to "
                           "go back to unpruned mode.  This will redownload the "
                           "entire blockchain");
+                    break;
+                }
+
+                // Check for changed -addrindex state
+                if (fAddrIndex != GetBoolArg("-addrindex", DEFAULT_ADDRINDEX)) {
+                    strLoadError = _("You need to rebuild the database using -reindex to change -addrindex");
                     break;
                 }
 
