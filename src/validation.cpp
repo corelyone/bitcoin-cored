@@ -2551,12 +2551,6 @@ static bool DisconnectTip(const Config &config, CValidationState &state,
     if (IsReplayProtectionEnabled(config, pindexDelete) &&
         !IsReplayProtectionEnabled(config, pindexDelete->pprev)) {
         mempool.clear();
-        // While not strictly necessary, clearing the disconnect pool is also
-        // beneficial so we don't try to reuse its content at the end of the
-        // reorg, which we know will fail.
-        if (disconnectpool) {
-            disconnectpool->clear();
-        }
     }
 
     if (!fBare) {
