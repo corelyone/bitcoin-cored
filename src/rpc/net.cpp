@@ -197,6 +197,7 @@ static UniValue getpeerinfo(const Config &config,
         }
         obj.push_back(Pair("whitelisted", stats.fWhitelisted));
         obj.push_back(Pair("cashmagic", stats.fUsesCashMagic));
+        obj.push_back(Pair("coremagic", stats.fUsesCoreMagic));
 
         UniValue sendPerMsgCmd(UniValue::VOBJ);
         for (const mapMsgCmdSize::value_type &i : stats.mapSendBytesPerMsgCmd) {

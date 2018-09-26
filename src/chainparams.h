@@ -65,6 +65,9 @@ public:
     const CMessageHeader::MessageStartChars &CashMessageStart() const {
         return pchCashMessageStart;
     }
+    const CMessageHeader::MessageStartChars &CoreMessageStart() const {
+        return pchCoreMessageStart;
+    }
     int GetDefaultPort() const { return nDefaultPort; }
 
     const CBlock &GenesisBlock() const { return genesis; }
@@ -97,6 +100,7 @@ protected:
     Consensus::Params consensus;
     CMessageHeader::MessageStartChars pchMessageStart;
     CMessageHeader::MessageStartChars pchCashMessageStart;
+    CMessageHeader::MessageStartChars pchCoreMessageStart;
     int nDefaultPort;
     uint64_t nPruneAfterHeight;
     std::vector<CDNSSeedData> vSeeds;

@@ -181,6 +181,10 @@ public:
         pchCashMessageStart[1] = 0xe1;
         pchCashMessageStart[2] = 0xf3;
         pchCashMessageStart[3] = 0xe8;
+        pchCoreMessageStart[0] = 0x12;
+        pchCoreMessageStart[1] = 0xb2;
+        pchCoreMessageStart[2] = 0xdc;
+        pchCoreMessageStart[3] = 0xf0;
         nDefaultPort = 10333;
         nPruneAfterHeight = 100000;
 
@@ -362,6 +366,10 @@ public:
         pchCashMessageStart[1] = 0xe5;
         pchCashMessageStart[2] = 0xf3;
         pchCashMessageStart[3] = 0xf4;
+        pchCoreMessageStart[0] = 0xde;
+        pchCoreMessageStart[1] = 0x9a;
+        pchCoreMessageStart[2] = 0x86;
+        pchCoreMessageStart[3] = 0xf7;
         nDefaultPort = 20333;
         nPruneAfterHeight = 1000;
 
@@ -484,6 +492,10 @@ public:
         pchCashMessageStart[1] = 0xb5;
         pchCashMessageStart[2] = 0xbf;
         pchCashMessageStart[3] = 0xfa;
+        pchCoreMessageStart[0] = 0xb7;
+        pchCoreMessageStart[1] = 0xd7;
+        pchCoreMessageStart[2] = 0x99;
+        pchCoreMessageStart[3] = 0xac;
         nDefaultPort = 20444;
         nPruneAfterHeight = 1000;
 

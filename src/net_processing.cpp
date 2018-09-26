@@ -1614,6 +1614,9 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
         if (pfrom->fUsesCashMagic) {
             LogPrintf("peer %d uses CASH magic in its headers\n", pfrom->id);
         }
+        if (pfrom->fUsesCoreMagic) {
+            LogPrintf("peer %d uses CORE magic in its headers\n", pfrom->id);
+        }
 
         int64_t nTimeOffset = nTime - GetTime();
         pfrom->nTimeOffset = nTimeOffset;
@@ -3150,15 +3153,21 @@ bool ProcessMessages(const Config &config, CNode *pfrom, CConnman &connman,
         memcmp(msg.hdr.pchMessageStart, chainparams.MessageStart(),
                CMessageHeader::MESSAGE_START_SIZE) == 0) {
         pfrom->fUsesCashMagic = false;
+        pfrom->fUsesCoreMagic = false;
     }
 
     // Scan for message start
     if (memcmp(msg.hdr.pchMessageStart, pfrom->GetMagic(chainparams),
                CMessageHeader::MESSAGE_START_SIZE) != 0) {
-        LogPrintf("PROCESSMESSAGE: INVALID MESSAGESTART %s peer=%d\n",
-                  SanitizeString(msg.hdr.GetCommand()), pfrom->id);
-        pfrom->fDisconnect = true;
-        return false;
+        if (memcmp(msg.hdr.pchMessageStart, chainparams.CashMessageStart(),
+                   CMessageHeader::MESSAGE_START_SIZE) == 0) {
+            LogPrintf("peer %d uses CASH magic in its headers\n", pfrom->id);
+        } else {
+            LogPrintf("PROCESSMESSAGE: INVALID MESSAGESTART %s peer=%d\n",
+                      SanitizeString(msg.hdr.GetCommand()), pfrom->id);
+            pfrom->fDisconnect = true;
+            return false;
+        }
     }
 
     // Read header
