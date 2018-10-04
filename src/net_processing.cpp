@@ -3156,18 +3156,19 @@ bool ProcessMessages(const Config &config, CNode *pfrom, CConnman &connman,
         pfrom->fUsesCoreMagic = false;
     }
 
+    if ((msg.nTime / 1000000) >=
+        chainparams.GetConsensus().coreMagicActivationTime) {
+        pfrom->fUsesCashMagic = false;
+        pfrom->fUsesCoreMagic = true;
+    }
+
     // Scan for message start
     if (memcmp(msg.hdr.pchMessageStart, pfrom->GetMagic(chainparams),
                CMessageHeader::MESSAGE_START_SIZE) != 0) {
-        if (memcmp(msg.hdr.pchMessageStart, chainparams.CashMessageStart(),
-                   CMessageHeader::MESSAGE_START_SIZE) == 0) {
-            LogPrintf("peer %d uses CASH magic in its headers\n", pfrom->id);
-        } else {
-            LogPrintf("PROCESSMESSAGE: INVALID MESSAGESTART %s peer=%d\n",
-                      SanitizeString(msg.hdr.GetCommand()), pfrom->id);
-            pfrom->fDisconnect = true;
-            return false;
-        }
+        LogPrintf("PROCESSMESSAGE: INVALID MESSAGESTART %s peer=%d\n",
+                  SanitizeString(msg.hdr.GetCommand()), pfrom->id);
+        pfrom->fDisconnect = true;
+        return false;
     }
 
     // Read header

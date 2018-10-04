@@ -92,6 +92,10 @@ struct Params {
 
     /** Enforce PROTOCOL_VERSION=80030, reject  PROTOCOL_VERSION=70015. */
     int64_t enforceProtocolVersion80030Time;
+
+    /** Activation time at which the CoreMagic kicks in. */
+    int64_t coreMagicActivationTime;
+
 };
 } // namespace Consensus
 

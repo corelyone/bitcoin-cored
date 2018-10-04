@@ -155,6 +155,10 @@ public:
         // At this height we will hardfork to 1-minute blocks and 30-period DAA
         consensus.oneMinuteBlockHeight = 588672;
 
+        // Activate CoreMagic/Deactivate CashMagic in headers time
+        // Dec 1, 2018 14:00:00
+        consensus.coreMagicActivationTime = 1543672800;
+
         // Take the amount of 10-minute blocks in this interval and add it
         // to the number of expected 1-minute blocks left in the orginal planned
         // interval to figure out when to cut the block subsidy. It should be more 
@@ -357,6 +361,10 @@ public:
  
         // At this height we will hardfork to 1-minute blocks and 30-period DAA
         consensus.oneMinuteBlockHeight = 160;
+
+        // Activate CoreMagic/Deactivate CashMagic in headers time
+        // Oct 6, 2018 14:00:00
+        consensus.coreMagicActivationTime = 1538834400;
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x11;
