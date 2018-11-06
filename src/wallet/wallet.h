@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2018 Elements Project developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -274,6 +275,11 @@ public:
     //!< position in ordered transaction list
     int64_t nOrderPos;
 
+    // For each output
+    mutable std::vector<uint256> vBlindingFactors;
+    mutable std::vector<CAmount> vAmountsOut;
+    mutable std::vector<CPubKey> vBlindingKeys;
+
     // memory only
     mutable bool fDebitCached;
     mutable bool fCreditCached;
@@ -385,6 +391,7 @@ public:
         fImmatureWatchCreditCached = false;
         fDebitCached = false;
         fChangeCached = false;
+        WipeUnknownBlindingData();
     }
 
     void BindWallet(CWallet *pwalletIn) {
@@ -394,11 +401,13 @@ public:
 
     //! filter decides which addresses will count towards the debit
     CAmount GetDebit(const isminefilter &filter) const;
+    CAmount GetCredit(unsigned int nTxOut, const isminefilter& filter) const;
     CAmount GetCredit(const isminefilter &filter) const;
     CAmount GetImmatureCredit(bool fUseCache = true) const;
     CAmount GetAvailableCredit(bool fUseCache = true) const;
     CAmount GetImmatureWatchOnlyCredit(const bool &fUseCache = true) const;
     CAmount GetAvailableWatchOnlyCredit(const bool &fUseCache = true) const;
+    CAmount GetChange(unsigned int nTxOut) const;
     CAmount GetChange() const;
 
     void GetAmounts(std::list<COutputEntry> &listReceived,
@@ -426,6 +435,47 @@ public:
     bool RelayWalletTransaction(CConnman *connman);
 
     std::set<uint256> GetConflicts() const;
+
+    // For use in wallet transaction creation to remember 3rd party values
+    // Unneeded for issuance.
+    void SetBlindingData(unsigned int nOut, CAmount amountIn, CPubKey pubkeyIn,
+        uint256 blindingfactorIn, const CAsset& assetIn,
+        uint256 assetBlindingFactorIn) const;
+
+private:
+    /*
+    * Computes, stores and returns the unblinded info, or retrieves if already computed previously.
+    * @param[in]    mapIndex - Where to store the blinding data. Issuance data is stored after the output data, with additional index offset calculated via GetPseudoInputOffset
+    * @param[in]    vchRangeproof - The rangeproof to unwind
+    * @param[in]    confValue - The value to unblind
+    * @param[in]    confAsset - The asset to unblind
+    * @param[in]    nonce - The nonce used to ECDH with the blinding key. This is null for issuance as blinding key is directly used as nonce
+    * @param[in]    scriptPubKey - The script being committed to by the rangeproof
+    */
+    void GetBlindingData(const unsigned int mapIndex,
+        const std::vector<unsigned char> &vchRangeproof,
+        const CConfidentialValue &confValue, const CConfidentialAsset &confAsset,
+        const CConfidentialNonce nonce, const CScript &scriptPubKey,
+        CAmount *pamountOut, CPubKey *ppubkeyOut, uint256 *pblindingfactorOut,
+        CAsset *pAssetOut, uint256 *passetBlindingFactorOut) const;
+    void WipeUnknownBlindingData() const;
+
+public:
+    //! Returns either the value out (if it is known) or -1
+    CAmount GetOutputValueOut(unsigned int nOut) const;
+
+    //! Returns either the blinding factor (if it is to us) or 0
+    uint256 GetOutputBlindingFactor(unsigned int nOut) const;
+    uint256 GetOutputAssetBlindingFactor(unsigned int nOut) const;
+    CAsset GetOutputAsset(unsigned int nOut) const;
+    CPubKey GetOutputBlindingPubKey(unsigned int nOut) const;
+    //! Get the issuance blinder for either the asset itself or the issuing tokens
+    uint256 GetIssuanceBlindingFactor(unsigned int vinIndex, bool fIssuanceToken) const;
+    //! Get the issuance amount for either the asset itself or the issuing tokens
+    CAmount GetIssuanceAmount(unsigned int vinIndex, bool fIssuanceToken) const;
+
+    //! Get the mapValue offset for a specific vin index and type of issuance pseudo-input
+    unsigned int GetPseudoInputOffset(const unsigned int index, const bool fIssuanceToken) const;
 };
 
 class COutput {
@@ -744,6 +794,12 @@ public:
     bool LoadKeyMetadata(const CTxDestination &pubKey,
                          const CKeyMetadata &metadata);
 
+    //! Adds a script-specific blinding key to the wallet, and saves it to disk.
+    bool AddSpecificBlindingKey(const CScriptID& scriptid, const uint256& key);
+    //! Adds a script-specific blinding key to the wallet without saving it to
+    //! disk (used by LoadWallet)
+    bool LoadSpecificBlindingKey(const CScriptID& scriptid, const uint256& key);
+
     bool LoadMinVersion(int nVersion) {
         AssertLockHeld(cs_wallet);
         nWalletVersion = nVersion;
@@ -1021,6 +1077,18 @@ public:
     bool AbandonTransaction(const uint256 &hashTx);
 
     /**
+     * script == NULL gives the backward compatible blinding key
+     */
+    CKey GetBlindingKey(const CScript *script) const;
+    CPubKey GetBlindingPubKey(const CScript& script) const;
+
+    void ComputeBlindingData(const CConfidentialValue& confValue,
+        const CConfidentialAsset& confAsset, const CConfidentialNonce& nonce,
+        const CScript& scriptPubKey, const std::vector<unsigned char>& vchRangeproof,
+        CAmount& amount, CPubKey& pubkey, uint256& blindingfactor, CAsset& asset,
+        uint256& assetBlindingFactor) const;
+
+    /**
      * Mark a transaction as replaced by another transaction (e.g., BIP 125).
      */
     bool MarkReplaced(const uint256 &originalHash, const uint256 &newHash);
@@ -1060,6 +1128,10 @@ public:
     /* Set the current HD master key (will reset the chain child index counters)
      */
     bool SetHDMasterKey(const CPubKey &key);
+
+    /* Returns map of issuance entropy to token/asset pairs known to the wallet from
+        initial issuance transactions*/
+    std::map<uint256, std::pair<CAsset, CAsset> > GetReissuanceTokenTypes() const;
 };
 
 /** A key allocated from the key pool. */
